@@ -257,11 +257,17 @@ function ensureMobileCtas() {
 function enableDesktopItemClicks() {
   items.forEach((item, index) => {
     item.addEventListener('click', () => {
-      setActive(index);
       if (isDesktopMode) {
+        setActive(index);
         scrollItemToSnap(index);
-      } else {
+        return;
+      }
+      // Mobile: first tap scrolls to + selects; second tap opens panel
+      if (index === activeIndex) {
         openPanel(index);
+      } else {
+        setActive(index);
+        scrollItemToSnap(index);
       }
     });
   });
