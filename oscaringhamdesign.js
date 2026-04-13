@@ -35,6 +35,10 @@ function applyActiveState(index) {
   if (isDesktopMode) {
     renderPanel(index);
   }
+  const slug = items[index]?.id;
+  if (slug) {
+    history.replaceState(null, '', '#' + slug);
+  }
 }
 
 function animateListReflow(anchorIndex, changeFn) {
@@ -270,12 +274,34 @@ window.addEventListener('keydown', (event) => {
   }
 });
 
+function applyHashOnLoad() {
+  const hash = location.hash.slice(1);
+  if (!hash) {
+    return;
+  }
+
+  const index = items.findIndex((item) => item.id === hash);
+  if (index < 0) {
+    return;
+  }
+
+  // Swap active state without animation (page is loading)
+  items[0]?.classList.remove('is-active');
+  applyActiveState(index);
+  scrollItemToSnap(index, 'auto');
+
+  if (!isDesktopMode) {
+    openPanel(index);
+  }
+}
+
 items[0]?.classList.add('is-active');
 ensureMobileCtas();
 enableDesktopItemClicks();
 renderPanel(0);
 updatePointer();
 syncLayoutMode();
+applyHashOnLoad();
 
 list?.addEventListener('scroll', onScroll, { passive: true });
 
