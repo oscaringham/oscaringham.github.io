@@ -79,7 +79,7 @@ function animateListReflow(anchorIndex, changeFn) {
         if (!item.style.transform) {
           return;
         }
-        item.style.transition = 'transform 180ms cubic-bezier(0.15, 0.9, 0.25, 1)';
+        item.style.transition = 'transform 120ms cubic-bezier(0.15, 0.9, 0.25, 1)';
         item.style.transform = '';
       });
     });
@@ -94,7 +94,7 @@ function animateListReflow(anchorIndex, changeFn) {
     });
     list?.classList.remove('is-reflowing');
     flipAnimating = false;
-  }, 220);
+  }, 160);
 }
 
 function updatePointer() {
