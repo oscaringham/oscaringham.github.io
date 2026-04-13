@@ -70,12 +70,14 @@ function animateListReflow(anchorIndex, changeFn) {
   });
 
   requestAnimationFrame(() => {
-    items.forEach((item) => {
-      if (!item.style.transform) {
-        return;
-      }
-      item.style.transition = 'transform 180ms cubic-bezier(0.15, 0.9, 0.25, 1)';
-      item.style.transform = '';
+    requestAnimationFrame(() => {
+      items.forEach((item) => {
+        if (!item.style.transform) {
+          return;
+        }
+        item.style.transition = 'transform 180ms cubic-bezier(0.15, 0.9, 0.25, 1)';
+        item.style.transform = '';
+      });
     });
   });
 
@@ -150,7 +152,11 @@ function scrollItemToSnap(index, behavior = 'smooth') {
 }
 
 function onScroll() {
-  if (ticking || flipAnimating) {
+  if (!isDesktopMode) {
+    return;
+  }
+
+  if (ticking) {
     return;
   }
 
@@ -160,6 +166,19 @@ function onScroll() {
     setActive(nextIndex);
     ticking = false;
   });
+}
+
+function onScrollEnd() {
+  if (isDesktopMode) {
+    return;
+  }
+
+  if (flipAnimating) {
+    return;
+  }
+
+  const nextIndex = getClosestToTopIndex();
+  setActive(nextIndex);
 }
 
 function renderPanel(index) {
@@ -259,6 +278,20 @@ updatePointer();
 syncLayoutMode();
 
 list?.addEventListener('scroll', onScroll, { passive: true });
+
+const supportsScrollEnd = 'onscrollend' in window;
+if (supportsScrollEnd) {
+  list?.addEventListener('scrollend', onScrollEnd, { passive: true });
+} else {
+  let scrollDebounceTimer = 0;
+  list?.addEventListener('scroll', () => {
+    if (isDesktopMode) {
+      return;
+    }
+    window.clearTimeout(scrollDebounceTimer);
+    scrollDebounceTimer = window.setTimeout(onScrollEnd, 150);
+  }, { passive: true });
+}
 window.addEventListener('resize', () => {
   updatePointer();
   syncLayoutMode();
