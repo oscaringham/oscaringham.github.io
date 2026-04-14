@@ -38,6 +38,8 @@ body {
 }
 
 .primary-cta {
+  display: inline-block;
+  text-decoration: none;
   position: static;
   border: 1px solid #000000;
   border-radius: 999px;
@@ -46,6 +48,20 @@ body {
   font-size: 16px;
   line-height: 1;
   padding: 8px 12px;
+  cursor: pointer;
+}
+
+.back-to-top {
+  display: block;
+  width: 100%;
+  margin-top: 16px;
+  padding: 20px 32px;
+  border: 1px solid #000000;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #000000;
+  font-size: 16px;
+  font-family: inherit;
   cursor: pointer;
 }
 

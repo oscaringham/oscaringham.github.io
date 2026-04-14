@@ -329,3 +329,7 @@ window.addEventListener('resize', () => {
   syncLayoutMode();
 });
 desktopQuery.addEventListener('change', syncLayoutMode);
+
+document.querySelector('.back-to-top')?.addEventListener('click', () => {
+  list?.scrollTo({ top: 0, behavior: 'smooth' });
+});
