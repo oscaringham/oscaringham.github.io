@@ -287,6 +287,23 @@ body {
   color: #000000;
 }
 
+.panel-content-body li {
+  font-size: 20px;
+  line-height: 1.6;
+  margin-bottom: 6px;
+}
+
+.panel-content-body ul,
+.panel-content-body ol {
+  margin: 8px 0 0;
+  padding-left: 24px;
+}
+
+.panel-content-image--portrait {
+  width: auto;
+  max-width: 280px;
+}
+
 @media (min-width: 1100px) {
   .project-item:hover .project-badge {
     opacity: 1;
