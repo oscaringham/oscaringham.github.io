@@ -287,16 +287,18 @@ body {
   color: #000000;
 }
 
-.panel-content-body li {
+.panel-content li {
   font-size: 20px;
   line-height: 1.6;
+  max-width: 820px;
   margin-bottom: 6px;
 }
 
-.panel-content-body ul,
-.panel-content-body ol {
+.panel-content ul,
+.panel-content ol {
+  max-width: 820px;
   margin: 8px 0 0;
-  padding-left: 24px;
+  padding-left: 1.5em;
 }
 
 .panel-content-image--portrait {
