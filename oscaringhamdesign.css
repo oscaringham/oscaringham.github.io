@@ -295,9 +295,10 @@ body {
 }
 
 .panel-content ul,
-.panel-content ol {
+.panel-content ol,
+.panel-content-list {
   max-width: 820px;
-  margin: 8px 0 0;
+  margin: 8px 0 16px;
   padding-left: 1.5em;
 }
 
