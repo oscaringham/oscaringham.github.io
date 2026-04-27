@@ -195,7 +195,14 @@ function renderPanel(index) {
   panelContent.replaceChildren(template.content.cloneNode(true));
 
   panelContent.querySelectorAll('.panel-content-video').forEach((wrapper) => {
-    wrapper.addEventListener('click', () => wrapper.classList.add('is-active'), { once: true });
+    const iframe = wrapper.querySelector('iframe');
+    if (!iframe) return;
+    iframe.remove();
+    wrapper.classList.add('video-ready');
+    wrapper.addEventListener('click', () => {
+      wrapper.appendChild(iframe);
+      wrapper.classList.remove('video-ready');
+    }, { once: true });
   });
 }
 
