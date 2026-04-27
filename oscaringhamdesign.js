@@ -193,6 +193,7 @@ function renderPanel(index) {
   }
 
   panelContent.replaceChildren(template.content.cloneNode(true));
+  panel.scrollTop = 0;
 
   panelContent.querySelectorAll('.panel-content-video').forEach((wrapper) => {
     const iframe = wrapper.querySelector('iframe');
