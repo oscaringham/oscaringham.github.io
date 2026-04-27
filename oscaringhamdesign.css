@@ -287,6 +287,16 @@ body {
   margin-bottom: 32px;
 }
 
+.panel-content-video::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.panel-content-video.is-active::after {
+  display: none;
+}
+
 .panel-content-video iframe {
   position: absolute;
   inset: 0;
