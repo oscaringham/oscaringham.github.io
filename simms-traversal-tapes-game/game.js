@@ -29,6 +29,7 @@ let lastFrameTime = 0;
 let currentLevel = 0;
 let audio = null;
 let playerJiggleStart = -Infinity;
+let gameElapsedMs = 0;
 
 const player = {
   x: 68,
@@ -67,6 +68,7 @@ function resetGame() {
   obstacles.length = 0;
   resetPlayer();
   gameStartTime = 0;
+  gameElapsedMs = 0;
 }
 
 function resetToLevelOne() {
@@ -183,6 +185,7 @@ function update(deltaSeconds, now) {
   }
 
   const elapsed = now - gameStartTime;
+  gameElapsedMs = elapsed;
   if (elapsed >= GAME_DURATION_MS) {
     if (audio) {
       audio.pause();
@@ -230,14 +233,24 @@ function update(deltaSeconds, now) {
   }
 }
 
-function drawGroundLine() {
-  const y = groundY();
-  ctx.strokeStyle = "#000000";
-  ctx.lineWidth = 4;
+function drawProgressBar() {
+  const progress = Math.min(1, gameElapsedMs / GAME_DURATION_MS);
+  const barWidth = canvas.width * 0.8;
+  const barX = (canvas.width - barWidth) / 2;
+  const barY = 16;
+  const barH = 8;
+
   ctx.beginPath();
-  ctx.moveTo(0, y);
-  ctx.lineTo(canvas.width, y);
-  ctx.stroke();
+  ctx.roundRect(barX, barY, barWidth, barH, 4);
+  ctx.fillStyle = "rgba(255, 255, 255, 0.25)";
+  ctx.fill();
+
+  if (progress > 0) {
+    ctx.beginPath();
+    ctx.roundRect(barX, barY, barWidth * progress, barH, 4);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+    ctx.fill();
+  }
 }
 
 function drawSoundwave(obstacle) {
@@ -280,62 +293,63 @@ function drawPlayer() {
 
 function drawStatus() {
   const cx = canvas.width / 2;
+  const barWidth = canvas.width * 0.8;
+  const barX = (canvas.width - barWidth) / 2;
+
+  drawProgressBar();
+
+  const left = Math.max(0, GAME_DURATION_MS - gameElapsedMs);
+  const seconds = Math.ceil(left / 1000);
+
+  ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+  ctx.font = "400 14px 'Inter', sans-serif";
+  ctx.textAlign = "left";
+  ctx.fillText(LEVELS[currentLevel].song, barX, 42);
+
+  ctx.font = "700 14px 'Inter', sans-serif";
+  ctx.textAlign = "right";
+  ctx.fillText(`${seconds}s`, barX + barWidth, 42);
+
   ctx.textAlign = "center";
 
   if (state === "idle") {
     ctx.fillStyle = "#ffffff";
-    ctx.font = "700 26px 'Inter', sans-serif";
-    ctx.fillText(`LEVEL ${currentLevel + 1} OF ${LEVELS.length}`, cx, 42);
-
-    ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-    ctx.font = "400 14px 'Inter', sans-serif";
-    ctx.fillText(LEVELS[currentLevel].song, cx, 64);
-
-    ctx.fillStyle = "#ffffff";
+    ctx.font = "700 42px 'Inter', sans-serif";
+    ctx.fillText(`LEVEL ${currentLevel + 1} OF ${LEVELS.length}`, cx, 96);
     ctx.font = "700 20px 'Inter', sans-serif";
-    ctx.fillText("TAP JUMP TO START", cx, 112);
-  }
-
-  if (state === "running") {
-    const left = Math.max(0, GAME_DURATION_MS - (performance.now() - gameStartTime));
-    const seconds = Math.ceil(left / 1000);
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "700 22px 'Inter', sans-serif";
-    ctx.fillText(`${seconds}s`, cx, 42);
+    ctx.fillText("TAP JUMP TO START", cx, 124);
   }
 
   if (state === "crashed") {
     ctx.fillStyle = "#ff4f4f";
     ctx.font = "700 22px 'Inter', sans-serif";
-    ctx.fillText("CRASHED", cx, 42);
+    ctx.fillText("CRASHED", cx, 64);
     ctx.fillStyle = "#ffffff";
     ctx.font = "700 18px 'Inter', sans-serif";
-    ctx.fillText("TAP RESTART", cx, 68);
+    ctx.fillText("TAP RESTART", cx, 86);
   }
 
   if (state === "won") {
     ctx.fillStyle = "#54ff8e";
     ctx.font = "700 22px 'Inter', sans-serif";
-    ctx.fillText(`LEVEL ${currentLevel} COMPLETE`, cx, 42);
+    ctx.fillText(`LEVEL ${currentLevel} COMPLETE`, cx, 64);
     ctx.fillStyle = "#ffffff";
     ctx.font = "700 18px 'Inter', sans-serif";
-    ctx.fillText(`TAP JUMP FOR LEVEL ${currentLevel + 1}`, cx, 68);
+    ctx.fillText(`TAP JUMP FOR LEVEL ${currentLevel + 1}`, cx, 86);
   }
 
   if (state === "all_complete") {
     ctx.fillStyle = "#54ff8e";
     ctx.font = "700 22px 'Inter', sans-serif";
-    ctx.fillText("ALL TAPES UNLOCKED", cx, 42);
+    ctx.fillText("ALL TAPES UNLOCKED", cx, 64);
     ctx.fillStyle = "#ffffff";
     ctx.font = "700 18px 'Inter', sans-serif";
-    ctx.fillText("TAP RESTART TO REPLAY", cx, 68);
+    ctx.fillText("TAP RESTART TO REPLAY", cx, 86);
   }
 }
 
 function render() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  drawGroundLine();
 
   for (const obstacle of obstacles) {
     drawSoundwave(obstacle);
