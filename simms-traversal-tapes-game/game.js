@@ -8,6 +8,8 @@ const GAME_DURATION_MS = 60000;
 const GRAVITY = 1550;
 const JUMP_VELOCITY = -620;
 const OBSTACLE_SPEED = 270;
+const JIGGLE_DURATION = 400;
+const ANIM_DIST = 80;
 
 const LEVELS = [
   { color: "#ff003d", song: "01_missing_u_stem_drums.mp3" },
@@ -26,6 +28,7 @@ let gameStartTime = 0;
 let lastFrameTime = 0;
 let currentLevel = 0;
 let audio = null;
+let playerJiggleStart = -Infinity;
 
 const player = {
   x: 68,
@@ -102,6 +105,7 @@ function jump() {
   }
   player.velocityY = JUMP_VELOCITY;
   player.grounded = false;
+  playerJiggleStart = performance.now();
   cassetteEl.classList.remove("cassette-bounce");
   void cassetteEl.offsetWidth;
   cassetteEl.classList.add("cassette-bounce");
@@ -136,23 +140,38 @@ function releaseR() {
   rHeld = false;
 }
 
+function getObstacleScale(obstacle) {
+  const centerX = obstacle.x + obstacle.width / 2;
+  let scale = 1;
+  if (centerX > canvas.width - ANIM_DIST) {
+    scale = (canvas.width - centerX) / ANIM_DIST;
+  } else if (centerX < ANIM_DIST) {
+    scale = centerX / ANIM_DIST;
+  }
+  return Math.max(0, Math.min(1, scale));
+}
+
 function checkCollision(obstacle) {
+  const scale = getObstacleScale(obstacle);
   const playerLeft = player.x + 16;
   const playerRight = player.x + player.width - 16;
   const playerTop = player.y + 4;
   const playerBottom = player.y + player.height;
 
-  const obstacleLeft = obstacle.x;
-  const obstacleRight = obstacle.x + obstacle.width;
+  const centerX = obstacle.x + obstacle.width / 2;
+  const obstacleLeft = centerX - (obstacle.width / 2) * scale;
+  const obstacleRight = centerX + (obstacle.width / 2) * scale;
 
   if (playerRight <= obstacleLeft || playerLeft >= obstacleRight) {
     return false;
   }
 
-  // Compute arch height at player centre using parabolic approximation of the Bézier
   const playerCenterX = (playerLeft + playerRight) / 2;
-  const u = Math.max(0, Math.min(1, (playerCenterX - obstacleLeft) / obstacle.width));
-  const archHeight = obstacle.height * 4 * u * (1 - u);
+  const effectiveWidth = obstacle.width * scale;
+  const u = effectiveWidth > 0
+    ? Math.max(0, Math.min(1, (playerCenterX - obstacleLeft) / effectiveWidth))
+    : 0;
+  const archHeight = obstacle.height * scale * 4 * u * (1 - u);
   const archTop = groundY() - archHeight;
 
   return playerBottom > archTop && playerTop < groundY();
@@ -222,54 +241,94 @@ function drawGroundLine() {
 }
 
 function drawSoundwave(obstacle) {
+  const scale = getObstacleScale(obstacle);
   const baseY = groundY();
-  const centerX = obstacle.x + obstacle.width * 0.5;
-  const topY = baseY - obstacle.height;
+  const centerX = obstacle.x + obstacle.width / 2;
+  const halfWidth = (obstacle.width / 2) * scale;
+  const topY = baseY - obstacle.height * scale;
 
   ctx.strokeStyle = "#000000";
   ctx.lineWidth = 5;
   ctx.lineJoin = "round";
   ctx.beginPath();
-  ctx.moveTo(obstacle.x, baseY);
-  ctx.quadraticCurveTo(centerX, topY, obstacle.x + obstacle.width, baseY);
+  ctx.moveTo(centerX - halfWidth, baseY);
+  ctx.quadraticCurveTo(centerX, topY, centerX + halfWidth, baseY);
   ctx.stroke();
 }
 
+function drawPlayer() {
+  const jiggleElapsed = performance.now() - playerJiggleStart;
+  if (!skaterSprite.complete) {
+    ctx.fillStyle = "#d9d9d9";
+    ctx.fillRect(player.x, player.y, player.width, player.height);
+    return;
+  }
+  if (jiggleElapsed < JIGGLE_DURATION) {
+    const t = jiggleElapsed / JIGGLE_DURATION;
+    const angle = Math.sin(t * Math.PI * 4) * 0.14 * (1 - t);
+    const cx = player.x + player.width / 2;
+    const cy = player.y + player.height / 2;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(angle);
+    ctx.drawImage(skaterSprite, -player.width / 2, -player.height / 2, player.width, player.height);
+    ctx.restore();
+  } else {
+    ctx.drawImage(skaterSprite, player.x, player.y, player.width, player.height);
+  }
+}
+
 function drawStatus() {
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "16px 'Courier New', monospace";
-  ctx.textAlign = "left";
+  const cx = canvas.width / 2;
+  ctx.textAlign = "center";
 
   if (state === "idle") {
-    ctx.fillText(`LEVEL ${currentLevel + 1} OF ${LEVELS.length}`, 20, 30);
-    ctx.fillText("TAP JUMP TO START", 20, 52);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "700 26px 'Inter', sans-serif";
+    ctx.fillText(`LEVEL ${currentLevel + 1} OF ${LEVELS.length}`, cx, 42);
+
+    ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+    ctx.font = "400 14px 'Inter', sans-serif";
+    ctx.fillText(LEVELS[currentLevel].song, cx, 64);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "700 20px 'Inter', sans-serif";
+    ctx.fillText("TAP JUMP TO START", cx, 112);
   }
 
   if (state === "running") {
     const left = Math.max(0, GAME_DURATION_MS - (performance.now() - gameStartTime));
     const seconds = Math.ceil(left / 1000);
-    ctx.fillText(`TIME: ${seconds}s`, 20, 30);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "700 22px 'Inter', sans-serif";
+    ctx.fillText(`${seconds}s`, cx, 42);
   }
 
   if (state === "crashed") {
     ctx.fillStyle = "#ff4f4f";
-    ctx.fillText("CRASHED", 20, 30);
+    ctx.font = "700 22px 'Inter', sans-serif";
+    ctx.fillText("CRASHED", cx, 42);
     ctx.fillStyle = "#ffffff";
-    ctx.fillText("TAP RESTART", 20, 52);
+    ctx.font = "700 18px 'Inter', sans-serif";
+    ctx.fillText("TAP RESTART", cx, 68);
   }
 
   if (state === "won") {
     ctx.fillStyle = "#54ff8e";
-    ctx.fillText(`LEVEL ${currentLevel} COMPLETE`, 20, 30);
+    ctx.font = "700 22px 'Inter', sans-serif";
+    ctx.fillText(`LEVEL ${currentLevel} COMPLETE`, cx, 42);
     ctx.fillStyle = "#ffffff";
-    ctx.fillText(`TAP JUMP FOR LEVEL ${currentLevel + 1}`, 20, 52);
+    ctx.font = "700 18px 'Inter', sans-serif";
+    ctx.fillText(`TAP JUMP FOR LEVEL ${currentLevel + 1}`, cx, 68);
   }
 
   if (state === "all_complete") {
     ctx.fillStyle = "#54ff8e";
-    ctx.fillText("ALL TAPES UNLOCKED", 20, 30);
+    ctx.font = "700 22px 'Inter', sans-serif";
+    ctx.fillText("ALL TAPES UNLOCKED", cx, 42);
     ctx.fillStyle = "#ffffff";
-    ctx.fillText("TAP RESTART TO REPLAY", 20, 52);
+    ctx.font = "700 18px 'Inter', sans-serif";
+    ctx.fillText("TAP RESTART TO REPLAY", cx, 68);
   }
 }
 
@@ -282,13 +341,7 @@ function render() {
     drawSoundwave(obstacle);
   }
 
-  if (skaterSprite.complete) {
-    ctx.drawImage(skaterSprite, player.x, player.y, player.width, player.height);
-  } else {
-    ctx.fillStyle = "#d9d9d9";
-    ctx.fillRect(player.x, player.y, player.width, player.height);
-  }
-
+  drawPlayer();
   drawStatus();
 }
 
@@ -354,4 +407,4 @@ bindTouchButton(rTouch, pressR, releaseR);
 
 applyLevelTheme(0);
 resetGame();
-requestAnimationFrame(tick);
+document.fonts.ready.then(() => requestAnimationFrame(tick));
