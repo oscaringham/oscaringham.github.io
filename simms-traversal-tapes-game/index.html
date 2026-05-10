@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Traversal Tapes</title>
+  <link rel="stylesheet" href="game.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <main class="page">
+    <img class="logo" src="Traversal_Tapes_title.png" alt="Traversal Tapes">
+    <div class="game-area">
+      <canvas id="gameCanvas" class="game-canvas" width="560" height="260" aria-label="Skating game"></canvas>
+      <img id="cassette" class="cassette" src="simms_cassette_tape_1.png" alt="Cassette tape">
+    </div>
+    <div class="controls-row">
+      <button id="rTouch" class="btn-restart" type="button">Restart</button>
+      <button class="btn-help" type="button">?</button>
+    </div>
+    <button id="spaceTouch" class="btn-jump" type="button">Jump</button>
+    <p class="hint">Hit [Jump] to start</p>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
